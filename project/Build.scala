@@ -1,13 +1,14 @@
-import sbt._
-import Keys._
+import bintray.BintrayPlugin.autoImport.{bintrayOrganization, bintrayRepository, bintrayOmitLicense}
+import play.routes.compiler.InjectedRoutesGenerator
 import play.sbt.routes.RoutesKeys.routesGenerator
-import play.routes.compiler.{InjectedRoutesGenerator, StaticRoutesGenerator}
+import sbt.Keys._
+import sbt._
 
 object StackableControllerProjects extends Build {
 
-  lazy val _organization = "jp.t2v"
+  lazy val _organization = "com.adendamedia"
 
-  lazy val _version = "0.7.0-SNAPSHOT"
+  lazy val _version = "0.7.0"
 
   def _publishTo(v: String) = {
     val nexus = "https://oss.sonatype.org/"
@@ -17,7 +18,9 @@ object StackableControllerProjects extends Build {
 
   lazy val _resolvers = Seq(
     "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases",
-    "sonatype releases" at "http://oss.sonatype.org/content/repositories/releases"
+    "sonatype releases" at "http://oss.sonatype.org/content/repositories/releases",
+    "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/",
+    Resolver.jcenterRepo
   )
 
   lazy val _scalacOptions = Seq("-unchecked")
@@ -45,33 +48,37 @@ object StackableControllerProjects extends Build {
   }
 
   val Scala211 = "2.11.11"
+  val Scala212 = "2.12.2"
 
   lazy val core = Project(
     id = "core", 
     base = file("core")
-  ).settings(
+  ).enablePlugins().settings(
     organization := _organization,
     name := "stackable-controller",
     version := _version,
-    scalaVersion := Scala211,
-    crossScalaVersions := Seq(Scala211, "2.12.2"),
-    publishTo <<= version { (v: String) => _publishTo(v) },
+    scalaVersion := Scala212,
+    crossScalaVersions := Seq(Scala211, Scala212),
+    //publishTo <<= version { (v: String) => _publishTo(v) },
     publishMavenStyle := true,
     resolvers ++= _resolvers,
     libraryDependencies ++= Seq(
       "com.typesafe.play" %% "play" % play.core.PlayVersion.current % "provided"
     ),
     sbtPlugin := false,
+    licenses += ("Apache-2.0", url("https://www.apache.org/licenses/LICENSE-2.0.html")),
+    bintrayOrganization := Some("adenda"),
+    bintrayRepository := "stackable-controller",
+    bintrayOmitLicense := true,
     scalacOptions ++= _scalacOptions,
-    publishMavenStyle := true,
     publishArtifact in Test := false,
-    pomIncludeRepository := { x => false },
-    pomExtra := _pomExtra
+    pomIncludeRepository := { x => false }
+    //pomExtra := _pomExtra
   )
 
   lazy val sample = Project("sample", file("sample")).enablePlugins(play.sbt.PlayScala).settings(
     version := _version,
-    scalaVersion := Scala211,
+    scalaVersion := Scala212,
     resolvers ++= _resolvers,
     routesGenerator := InjectedRoutesGenerator,
     libraryDependencies ++= Seq(
@@ -87,7 +94,7 @@ object StackableControllerProjects extends Build {
   ) dependsOn(core)
 
   lazy val root = Project(id = "root", base = file(".")).settings(
-    scalaVersion := Scala211
+    scalaVersion := Scala212
   ).aggregate(core, sample) 
 
 }
